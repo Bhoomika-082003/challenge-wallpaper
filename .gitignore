@@ -1,0 +1,4 @@
+__pycache__/
+output/archive/
+output/preview_*.png
+.venv/

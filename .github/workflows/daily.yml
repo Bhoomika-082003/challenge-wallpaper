@@ -1,0 +1,38 @@
+# Free daily wallpaper build on GitHub's servers - your laptop can stay off.
+name: Daily wallpaper
+
+on:
+  schedule:
+    # GitHub cron is always UTC. Run ~1 hour BEFORE your 6:00 AM iPhone automation.
+    # Example: 5:00 AM at UTC+5:30  ->  23:30 UTC the previous day.
+    - cron: "30 23 * * *"
+  workflow_dispatch:        # lets you press "Run workflow" manually to test
+
+permissions:
+  contents: write           # needed so the job can commit the new image
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install fonts (Korean support) and dependencies
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y fonts-noto-cjk
+          pip install -r requirements.txt
+
+      - name: Generate wallpaper
+        run: python main.py
+
+      - name: Commit if changed
+        run: |
+          git config user.name  "wallpaper-bot"
+          git config user.email "wallpaper-bot@users.noreply.github.com"
+          git add output/wallpaper.png
+          git diff --cached --quiet || (git commit -m "wallpaper: day $(cat output/day.txt)" && git push)
